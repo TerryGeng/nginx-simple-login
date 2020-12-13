@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta charset="UTF-8">
+    <title>Login - {{ site_name }}</title>
+
+    <link rel="stylesheet" href="static/css/style.css">
+    <script src="static/js/login.js"></script>
+</head>
+<body>
+    <div class="container h-100">
+        <div class="row my-auto h-75">
+            <div class="col-5 my-auto mx-auto">
+                <div class="card mx-auto">
+                    <div class="card-header">
+                        <i class="fas fa-key" aria-hidden="true"></i> Login to {{ site_name }}
+                    </div>
+                    <div class="card-body">
+                        <h3>{{ login_title }}</h3>
+                        <hr />
+                        <div class="alert alert-warning" id="login-warning-box" style="display: none">
+                            <h5 class="alert-heading box-title"></h5>
+                            <p class="mb-0 box-content"></p>
+                        </div>
+                        <div class="alert alert-danger" id="login-danger-box" style="display: none">
+                            <h5 class="alert-heading box-title"></h5>
+                            <p class="mb-0 box-content"></p>
+                        </div>
+                        <div class="alert alert-success" id="login-success-box" style="display: none">
+                            <h5 class="alert-heading box-title"></h5>
+                            <p class="mb-0 box-content"></p>
+                        </div>
+                        <div class="form-group">
+                            {{ login_message }}
+                        </div>
+                        <div class="form-group">
+                            <label for="login-user">User name</label>
+                            <input type="text" class="form-control" id="login-user" name="user">
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Password</label>
+                            <input type="password" class="form-control" id="login-password" name="password">
+                        </div>
+                        <div class="form-group">
+                            <button type="button" class="btn btn-primary float-right" id="login-submit">
+                                <i class="fas fa-check" aria-hidden="true"></i> Login
+                            </button>
+                        </div>
+                        <input type="hidden" id="login-redirect" value="{{ redirect }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

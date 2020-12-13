@@ -1,0 +1,133 @@
+import os
+import time
+import logging
+import argparse
+import yaml
+from flask import Flask, session, abort, request, render_template
+
+from .utils.reverse_proxied import ReverseProxied
+from .utils.user_table import UserTable
+
+app = Flask(__name__)
+
+config = {}
+user_table: UserTable
+
+log = logging.getLogger("login")
+
+
+def if_login():
+    if not user_table.has_user(session['user']) or not (
+            time.time() - session['login_at'] <
+            config.get('login_life_time', 24 * 3600)):
+        return False
+    return True
+
+
+@app.route('/auth', defaults={'privileges': "default"})
+@app.route('/auth/<path:privileges>')
+def auth(privileges):
+    if 'user' not in session:
+        abort(401)
+    else:
+        if not if_login():
+            abort(401)
+
+        if not user_table.verify_user_privileges(
+                session['user'], privileges.split("/")):
+            return open("templates/403.html", "r").read(), 403
+
+        return '', 200
+
+
+@app.route('/', methods=['GET'])
+@app.route('/login', methods=['GET'])
+def login_page():
+    redirect = ""
+    if 'redirect' in request.args:
+        redirect = request.args['redirect']
+
+    return render_template("login.template.html",
+                           site_name=config.get("site_name", "restricted area"),
+                           login_title=config.get("login_page_title",
+                                                  "Authentication Needed"),
+                           login_message=config.get("login_page_message",
+                                                    ""),
+                           redirect=redirect), 200
+
+
+@app.route('/', methods=['POST'])
+@app.route('/login', methods=['POST'])
+def verify_login():
+    if 'user' in request.form and 'password' in request.form:
+        user = request.form['user']
+        password = request.form['password']
+
+        if (user_table.has_user(user) and
+                user_table.verify_user_password(user, password)):
+            user_table.update_user_login_info(user, request.remote_addr,
+                                              int(time.time()))
+            session['user'] = user
+            session['login_at'] = int(time.time())
+            session.permanent = True
+            return '', 200
+        abort(403)
+
+
+@app.route('/change_password', methods=['POST'])
+def change_password():
+    if 'user' in request.form and 'old-password' in request.form and \
+            'new-password' in request.form:
+        user = request.form['user']
+        old_password = request.form['old-password']
+        new_password = request.form['new-password']
+
+        if (user_table.has_user(user) and
+                user_table.verify_user_password(user, old_password)):
+            user_table.change_user_password(user, new_password)
+            return '', 200
+        abort(403)
+
+
+@app.route('/change_password', methods=['GET'])
+def change_password_page():
+    return render_template("password.template.html"), 200
+
+
+def main():
+    global user_table, app, config
+
+    parser = argparse.ArgumentParser(
+        description="a web service that provides authentication together with "
+                    "Nginx's auth_request module")
+
+    parser.add_argument("--config", "-c", dest="config_path",
+                        help="path to the configuration file")
+    args = parser.parse_args()
+
+    if not args.config_path or not os.path.exists(args.config_path):
+        print("ERROR: config file doesn't exist.")
+        exit(1)
+
+    with open(args.config_path, "r") as f:
+        config = yaml.safe_load(f)
+
+    if 'session_secret_key' not in config:
+        print("ERROR: session_secret_key must be set in configuration file.")
+    app.secret_key = config['session_secret_key']
+    app.permanent_session_lifetime = config.get('login_life_time', 24*3600)
+    user_table_path = config.get('user_table', 'user_table.yaml')
+    if os.path.exists(user_table_path):
+        user_table = UserTable(user_table_path)
+    else:
+        print("ERROR: user table doesn't exist.")
+        exit(1)
+
+    app.wsgi_app = ReverseProxied(app.wsgi_app)
+
+    app.run(port=config.get('port', 8222), host=config.get('host', '127.0.0.1'))
+
+
+if __name__ == "__main__":
+    main()
+
