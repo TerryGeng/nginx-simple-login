@@ -8,6 +8,7 @@ from flask import Flask, session, abort, request, render_template
 from .utils.reverse_proxied import ReverseProxied
 from .utils.user_table import UserTable
 
+logger: logging.Logger
 app = Flask(__name__)
 
 config = {}
@@ -28,9 +29,11 @@ def if_login():
 @app.route('/auth/<path:privileges>')
 def auth(privileges):
     if 'user' not in session:
+        logger.info(f"Unsuccessful auth request from {request.remote_addr}.")
         abort(401)
     else:
         if not if_login():
+            logger.info(f"Unsuccessful auth request from {request.remote_addr}.")
             abort(401)
 
         if not user_table.verify_user_privileges(
@@ -67,11 +70,16 @@ def verify_login():
                 user_table.verify_user_password(user, password)):
             user_table.update_user_login_info(user, request.remote_addr,
                                               int(time.time()))
+
+            logger.info(f"User {user} logged in from {request.remote_addr}.")
+
             session['user'] = user
             session['login_at'] = int(time.time())
             session.permanent = True
             return '', 200
-        abort(403)
+
+        logger.info(f"Failed login attempt for {user} from {request.remote_addr}.")
+    abort(403)
 
 
 @app.route('/change_password', methods=['POST'])
@@ -95,7 +103,7 @@ def change_password_page():
 
 
 def main():
-    global user_table, app, config
+    global user_table, app, config, logger
 
     parser = argparse.ArgumentParser(
         description="a web service that provides authentication together with "
@@ -122,6 +130,17 @@ def main():
     else:
         print("ERROR: user table doesn't exist.")
         exit(1)
+
+    logger = logging.getLogger()
+    if 'logfile' in config:
+        handler = logging.FileHandler(config['logfile'])
+    else:
+        handler = logging.StreamHandler()
+
+    formatter = logging.Formatter(
+        '[%(asctime)s %(levelname)s] %(message)s', "%b %d %H:%M:%S")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
     app.wsgi_app = ReverseProxied(app.wsgi_app)
 
