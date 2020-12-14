@@ -8,13 +8,12 @@ from flask import Flask, session, abort, request, render_template, redirect
 from .utils.reverse_proxied import ReverseProxied
 from .utils.user_table import UserTable
 
-logger: logging.Logger
 app = Flask(__name__)
 
 config = {}
 user_table: UserTable
 
-log = logging.getLogger("login")
+logger = logging.getLogger("login")
 
 
 def if_login():
@@ -182,7 +181,6 @@ def main():
         print("ERROR: user table doesn't exist.")
         exit(1)
 
-    logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     if 'logfile' in config and config['logfile']:
         handler = logging.FileHandler(config['logfile'])
