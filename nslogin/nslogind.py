@@ -41,6 +41,7 @@ def auth(privileges):
 
         if not user_table.verify_user_privileges(
                 session['user'], privileges.split("/")):
+            logger.info(f"Rejected {session['user']}'s access request to privileged area {privileges}.")
             return render_template("403.template.html",
                                    site_name=config.get("site_name", "Restricted Area")
                                    ), 403
@@ -175,6 +176,7 @@ def main():
         exit(1)
 
     logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
     if 'logfile' in config and config['logfile']:
         handler = logging.FileHandler(config['logfile'])
     else:
