@@ -142,6 +142,13 @@ def logout():
         return redirect('./?logout=True', code=302)
 
 
+@app.route('/403', methods=['GET'])
+def forbidden():
+    return render_template("403.template.html",
+                           site_name=config.get("site_name", "Restricted Area")
+                           ), 403
+
+
 def main():
     global user_table, app, config, logger
 
