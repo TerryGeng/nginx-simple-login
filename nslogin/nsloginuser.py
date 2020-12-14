@@ -123,7 +123,7 @@ def main():
                               help="remove user")
     action_group.add_argument("--list", "-l", action="store_true",
                               help="list user's info")
-    action_group.add_argument("--modify", "-q", action="store_true",
+    action_group.add_argument("--modify", "-m", action="store_true",
                               help="modify user's password and privileges")
 
     parser.add_argument("--name", "-n", dest="user_name",
