@@ -23,4 +23,11 @@ export async function changePassword(user, oldPassword, newPassword) {
     return response.status === 200;
 }
 
+export async function logout() {
+    const response = await fetch('./logout',{
+        method: 'GET',
+        credentials: 'include'
+    });
+    return response.status === 200;
+}
 

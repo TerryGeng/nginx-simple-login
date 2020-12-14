@@ -134,11 +134,10 @@ def change_password_page():
 
 @app.route('/logout', methods=['GET'])
 def logout():
-    if 'user' not in session or 'login_at' not in session or not if_login():
-        return redirect('./?logout=True', code=302)
-    else:
+    if 'user' in session or 'login_at' in session:
         session.clear()
-        return redirect('./?logout=True', code=302)
+
+    return '', 200
 
 
 @app.route('/403', methods=['GET'])
