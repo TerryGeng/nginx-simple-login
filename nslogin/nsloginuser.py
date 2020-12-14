@@ -101,6 +101,8 @@ def list_user(args):
             user = ""
 
         user_table.list_users(user, user_regex)
+    else:
+        user_table.list_users(user)
 
 
 def main():
