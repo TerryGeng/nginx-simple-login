@@ -20,15 +20,31 @@
                         <h3>{{ login_title }}</h3>
                         <hr />
                         <div class="alert alert-warning" id="login-warning-box" style="display: none">
-                            <h5 class="alert-heading box-title"></h5>
+                            <h5 class="alert-heading">
+                                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                <span class="box-title"></span>
+                            </h5>
                             <p class="mb-0 box-content"></p>
                         </div>
                         <div class="alert alert-danger" id="login-danger-box" style="display: none">
-                            <h5 class="alert-heading box-title"></h5>
+                            <h5 class="alert-heading">
+                                <i class="fa fa-times-circle" aria-hidden="true"></i>
+                                <span class="box-title"></span>
+                            </h5>
                             <p class="mb-0 box-content"></p>
                         </div>
                         <div class="alert alert-success" id="login-success-box" style="display: none">
-                            <h5 class="alert-heading box-title"></h5>
+                            <h5 class="alert-heading">
+                                <i class="fas fa-check" aria-hidden="true"></i>
+                                <span class="box-title"></span>
+                            </h5>
+                            <p class="mb-0 box-content"></p>
+                        </div>
+                        <div class="alert alert-info" id="login-info-box" style="display: none">
+                            <h5 class="alert-heading">
+                                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                                <span class="box-title"></span>
+                            </h5>
                             <p class="mb-0 box-content"></p>
                         </div>
                         <div class="form-group">
@@ -48,6 +64,7 @@
                             </button>
                         </div>
                         <input type="hidden" id="login-redirect" value="{{ redirect }}">
+                        <input type="hidden" id="logout-status" value="{{ logout }}">
                     </div>
                 </div>
             </div>

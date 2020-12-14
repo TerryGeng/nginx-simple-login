@@ -1,6 +1,6 @@
 import {library, dom} from '@fortawesome/fontawesome-svg-core/index.es.js';
 import {
-  faKey, faCheck
+  faKey, faCheck, faInfoCircle, faExclamationTriangle
 } from '@fortawesome/free-solid-svg-icons/index.es.js';
 
 import {
@@ -8,42 +8,14 @@ import {
 } from '@fortawesome/free-regular-svg-icons/index.es.js';
 
 library.add(
-    faKey, faCheck, faTimesCircle
+    faKey, faCheck, faTimesCircle, faInfoCircle, faExclamationTriangle
 );
 
-async function login(user, password) {
-  const formData = new FormData();
-  formData.append('user', user);
-  formData.append('password', password);
-  const response = await fetch('.',{
-    method: 'POST',
-    credentials: 'include',
-    body: formData
-  });
-  return response.status === 200;
-}
+import {
+    clearPromptBox, showPromptBox
+} from './prompt-box';
 
-function showPromptBox(header, content, type='warning') {
-    clearPromptBox();
-
-    if (!type in ['warning', 'danger', 'success']) {
-      return;
-    }
-    console.debug(`login-${type}-box`);
-    let box = document.getElementById(`login-${type}-box`);
-    let boxHeader = box.getElementsByClassName("box-title")[0];
-    let boxContent = box.getElementsByClassName("box-content")[0];
-    boxHeader.innerHTML = header;
-    boxContent.innerHTML = content;
-    box.style.display = "block";
-}
-
-function clearPromptBox() {
-    for (let type of ['warning', 'danger', 'success']) {
-        let box = document.getElementById(`login-${type}-box`);
-        box.style.display = "none";
-    }
-}
+import { login } from './user';
 
 document.addEventListener('DOMContentLoaded', () => {
   dom.watch();
@@ -52,6 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const passwordInput = document.getElementById('login-password');
   const submitBtn = document.getElementById('login-submit');
   const redirectInput = document.getElementById('login-redirect');
+  const logoutStatus = document.getElementById('logout-status');
+
+  if (logoutStatus.value === 'True') {
+      showPromptBox(
+          "Successfully Logged Out",
+          "You have successfully logged out.",
+          "info");
+  }
 
   submitBtn.addEventListener('click', () => {
       clearPromptBox();
@@ -73,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
           showPromptBox(
               "Logging in...",
               "Please wait for a second...",
-              "warning");
+              "info");
           login(userInput.value, passwordInput.value).then(
               success => {
                   if (success) {
@@ -88,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
                               "Login Success",
                               "Now you may access the restricted area.",
                               "success");
+                          location.reload();
                       }
                   } else {
                       showPromptBox(

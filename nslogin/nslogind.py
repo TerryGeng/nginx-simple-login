@@ -3,7 +3,7 @@ import time
 import logging
 import argparse
 import yaml
-from flask import Flask, session, abort, request, render_template
+from flask import Flask, session, abort, request, render_template, redirect
 
 from .utils.reverse_proxied import ReverseProxied
 from .utils.user_table import UserTable
@@ -18,6 +18,9 @@ log = logging.getLogger("login")
 
 
 def if_login():
+    if 'user' not in session or 'login_at' not in session:
+        return False
+
     if not user_table.has_user(session['user']) or not (
             time.time() - session['login_at'] <
             config.get('login_life_time', 24 * 3600)):
@@ -28,7 +31,7 @@ def if_login():
 @app.route('/auth', defaults={'privileges': "default"})
 @app.route('/auth/<path:privileges>')
 def auth(privileges):
-    if 'user' not in session:
+    if 'user' not in session or 'login_at' not in session:
         logger.info(f"Unsuccessful auth request from {request.remote_addr}.")
         abort(401)
     else:
@@ -38,7 +41,9 @@ def auth(privileges):
 
         if not user_table.verify_user_privileges(
                 session['user'], privileges.split("/")):
-            return open("templates/403.html", "r").read(), 403
+            return render_template("403.template.html",
+                                   site_name=config.get("site_name", "Restricted Area")
+                                   ), 403
 
         return '', 200
 
@@ -47,17 +52,31 @@ def auth(privileges):
 @app.route('/login', methods=['GET'])
 @app.route('/login/', methods=['GET'])
 def login_page():
-    redirect = ""
-    if 'redirect' in request.args:
-        redirect = request.args['redirect']
+    if if_login():
+        return render_template("post-login.template.html",
+                               site_name=config.get("site_name", "Restricted Area"),
+                               post_login_title=config.get("post_login_page_title",
+                                                           "User Area"),
+                               post_login_message=config.get("post_login_page_title",
+                                                             "Welcome")
+                               ), 200
+    else:
+        redirect = ""
+        if 'redirect' in request.args:
+            redirect = request.args['redirect']
 
-    return render_template("login.template.html",
-                           site_name=config.get("site_name", "restricted area"),
-                           login_title=config.get("login_page_title",
-                                                  "Authentication Needed"),
-                           login_message=config.get("login_page_message",
-                                                    ""),
-                           redirect=redirect), 200
+        logout = False
+        if 'logout' in request.args:
+            logout = True
+
+        return render_template("login.template.html",
+                               site_name=config.get("site_name", "Restricted Area"),
+                               login_title=config.get("login_page_title",
+                                                      "Authentication Needed"),
+                               login_message=config.get("login_page_message",
+                                                        ""),
+                               redirect=redirect,
+                               logout=logout), 200
 
 
 @app.route('/', methods=['POST'])
@@ -84,8 +103,11 @@ def verify_login():
     abort(403)
 
 
-@app.route('/change_password', methods=['POST'])
+@app.route('/changepassword', methods=['POST'])
 def change_password():
+    if not if_login():
+        abort(401)
+
     if 'user' in request.form and 'old-password' in request.form and \
             'new-password' in request.form:
         user = request.form['user']
@@ -99,20 +121,24 @@ def change_password():
         abort(403)
 
 
-@app.route('/change_password', methods=['GET'])
+@app.route('/changepassword', methods=['GET'])
 def change_password_page():
-    return render_template("password.template.html"), 200
+    if not if_login():
+        abort(401)
+
+    return render_template("change-password.template.html",
+                           site_name=config.get("site_name", "Restricted Area"),
+                           user=session['user']
+                           ), 200
 
 
-def solve_filepath(path):
-    if not path:
-        return ''
-
-    if path[0] == '/':
-        return path
+@app.route('/logout', methods=['GET'])
+def logout():
+    if 'user' not in session or 'login_at' not in session or not if_login():
+        return redirect('./?logout=True', code=302)
     else:
-        mydir = os.path.dirname(os.path.realpath(__file__))
-        return mydir + '/' + path
+        session.clear()
+        return redirect('./?logout=True', code=302)
 
 
 def main():
@@ -126,10 +152,8 @@ def main():
                         help="path to the configuration file")
     args = parser.parse_args()
 
-    config_path = args.config_path
     if args.config_path:
         if not os.path.exists(args.config_path):
-            config_path = solve_filepath(config_path)
             print("ERROR: config file doesn't exist.")
             exit(1)
     else:
@@ -143,7 +167,7 @@ def main():
         print("ERROR: session_secret_key must be set in configuration file.")
     app.secret_key = config['session_secret_key']
     app.permanent_session_lifetime = config.get('login_life_time', 24*3600)
-    user_table_path = solve_filepath(config.get('user_table', 'user_table.yaml'))
+    user_table_path = config.get('user_table', 'user_table.yaml')
     if os.path.exists(user_table_path):
         user_table = UserTable(user_table_path)
     else:

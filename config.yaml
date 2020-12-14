@@ -1,0 +1,4 @@
+user_table: users.yaml
+session_secret_key: deadbeef
+site_name: Terry's Storage
+logfile: 
