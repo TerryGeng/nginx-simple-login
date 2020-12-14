@@ -35,7 +35,7 @@ nslogin-user --config config.yaml --add --name terry
 5. Run `nslogind --config config.yaml`.
 
 6. Edit `nginx.conf`, 
-```
+```nginx
     location / {
         auth_request /nslogin/auth;  # <<< insert auth_request at locations that require auth
         root   /srv/http;
