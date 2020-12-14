@@ -45,6 +45,7 @@ def auth(privileges):
 
 @app.route('/', methods=['GET'])
 @app.route('/login', methods=['GET'])
+@app.route('/login/', methods=['GET'])
 def login_page():
     redirect = ""
     if 'redirect' in request.args:
@@ -61,6 +62,7 @@ def login_page():
 
 @app.route('/', methods=['POST'])
 @app.route('/login', methods=['POST'])
+@app.route('/login/', methods=['POST'])
 def verify_login():
     if 'user' in request.form and 'password' in request.form:
         user = request.form['user']
@@ -102,6 +104,17 @@ def change_password_page():
     return render_template("password.template.html"), 200
 
 
+def solve_filepath(path):
+    if not path:
+        return ''
+
+    if path[0] == '/':
+        return path
+    else:
+        mydir = os.path.dirname(os.path.realpath(__file__))
+        return mydir + '/' + path
+
+
 def main():
     global user_table, app, config, logger
 
@@ -113,8 +126,14 @@ def main():
                         help="path to the configuration file")
     args = parser.parse_args()
 
-    if not args.config_path or not os.path.exists(args.config_path):
-        print("ERROR: config file doesn't exist.")
+    config_path = args.config_path
+    if args.config_path:
+        if not os.path.exists(args.config_path):
+            config_path = solve_filepath(config_path)
+            print("ERROR: config file doesn't exist.")
+            exit(1)
+    else:
+        print("ERROR: config file wasn't specified.")
         exit(1)
 
     with open(args.config_path, "r") as f:
@@ -124,7 +143,7 @@ def main():
         print("ERROR: session_secret_key must be set in configuration file.")
     app.secret_key = config['session_secret_key']
     app.permanent_session_lifetime = config.get('login_life_time', 24*3600)
-    user_table_path = config.get('user_table', 'user_table.yaml')
+    user_table_path = solve_filepath(config.get('user_table', 'user_table.yaml'))
     if os.path.exists(user_table_path):
         user_table = UserTable(user_table_path)
     else:
@@ -132,7 +151,7 @@ def main():
         exit(1)
 
     logger = logging.getLogger()
-    if 'logfile' in config:
+    if 'logfile' in config and config['logfile']:
         handler = logging.FileHandler(config['logfile'])
     else:
         handler = logging.StreamHandler()

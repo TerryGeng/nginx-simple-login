@@ -15,7 +15,7 @@ async function login(user, password) {
   const formData = new FormData();
   formData.append('user', user);
   formData.append('password', password);
-  const response = await fetch('login',{
+  const response = await fetch('.',{
     method: 'POST',
     credentials: 'include',
     body: formData
