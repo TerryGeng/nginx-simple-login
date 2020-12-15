@@ -191,6 +191,9 @@ def main():
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
+    werkzeug_logger = logging.getLogger('werkzeug')
+    werkzeug_logger.setLevel(logging.WARNING)
+
     app.wsgi_app = ReverseProxied(app.wsgi_app)
 
     app.run(port=config.get('port', 8222), host=config.get('host', '127.0.0.1'))
