@@ -25,6 +25,10 @@ def add_user(args):
               "The first character must be a alphabet.")
         exit(1)
 
+    if user_table.has_user(user):
+        print(f"ERROR: user {user} exists.")
+        exit(1)
+
     if not password:
         from getpass import getpass
         while True:
@@ -62,6 +66,8 @@ def modify_user(args):
     user = args.user_name
     password = args.password
     privileges = args.privileges
+    privileges_append = args.privileges_append
+    privileges_remove = args.privileges_remove
 
     if not user_table.has_user(user):
         print(f"ERROR: user {user} doesn't exist.")
@@ -81,8 +87,26 @@ def modify_user(args):
         user_table.change_user_password(user, password)
 
     if privileges:
-        privileges_list = [s.strip() for s in privileges.split(",")]
+        privileges_list = [s.strip().lower() for s in privileges.split(",")]
         user_table.change_user_privileges(user, privileges_list)
+
+    if privileges_append:
+        old_privileges = user_table.get_user_privileges(user)
+        privileges_list = [s.strip().lower() for s in privileges_append.split(",")]
+        for priv in privileges_list:
+            if priv not in old_privileges:
+                old_privileges.append(priv)
+
+        user_table.change_user_privileges(user, old_privileges)
+
+    if privileges_remove:
+        old_privileges = user_table.get_user_privileges(user)
+        privileges_remove = [s.strip().lower() for s in privileges_remove.split(",")]
+        for priv in privileges_remove:
+            if priv in old_privileges:
+                old_privileges.remove(priv)
+
+        user_table.change_user_privileges(user, old_privileges)
 
     print(f"User {user} has been modified.")
 
@@ -138,7 +162,13 @@ def main():
                              "type in the password)")
     parser.add_argument("--privileges", "-pr", dest="privileges",
                         help="specify the privileges, separated by ',' (for "
-                             "action 'add', 'modify', and 'query')")
+                             "action 'add', 'modify', and 'list')")
+    parser.add_argument("--privileges--append", "-pra", dest="privileges_append",
+                        help="append privileges, separated by ',' (for "
+                             "action 'modify')")
+    parser.add_argument("--privileges--revoke", "-prr", dest="privileges_remove",
+                        help="revoke privileges, separated by ',' (for "
+                             "action 'modify')")
 
     args = parser.parse_args()
 
@@ -146,8 +176,11 @@ def main():
         user_table_path = args.table_path
     else:
         if not args.config_path or not os.path.exists(args.config_path):
-            print("ERROR: config file doesn't exist.")
-            exit(1)
+            if os.path.exists('config.yaml'):
+                args.config_path = 'config.yaml'
+            else:
+                print("ERROR: config file doesn't exist.")
+                exit(1)
 
         with open(args.config_path, "r") as f:
             config = yaml.safe_load(f)

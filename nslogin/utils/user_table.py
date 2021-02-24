@@ -125,6 +125,12 @@ class UserTable:
 
         return True
 
+    def get_user_privileges(self, user):
+        if user not in self.user_dict:
+            raise ValueError(f"User '{user}' doesn't exist.")
+
+        return self.user_dict[user].privilege
+
     def change_user_privileges(self, user, privileges):
         if user not in self.user_dict:
             raise ValueError(f"User '{user}' doesn't exist.")
