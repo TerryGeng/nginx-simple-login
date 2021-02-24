@@ -1,3 +1,4 @@
+import re
 import os
 import time
 import logging
@@ -22,12 +23,23 @@ logger = logging.getLogger("login")
 
 
 def get_login_record():
-    if 'token' in request.cookies and request.cookies['token'] in login_token_record:
-        login = login_token_record[request.cookies['token']]
-    elif 'token' in request.args:
-        login = login_token_record[request.args['token']]
+    token = ""
+
+    if 'token' in request.cookies:
+        token = request.cookies['token']
     else:
+        if 'X-Original-URI' in request.headers:
+            match = re.findall("token=(.*)&?", request.headers['X-Original-URI'])
+            if not match:
+                return None
+            token = match[0]
+        else:
+            return None
+
+    if token not in login_token_record:
         return None
+
+    login = login_token_record[token]
 
     if not (time.time() - login.login_at <
             config.get('login_life_time', 24 * 3600)):
