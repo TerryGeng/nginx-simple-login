@@ -14,6 +14,8 @@ with nginx's auth_request.
 
 ## Usage
 
+### Basic
+
 1. Clone this repo.
 
 2. Install this package by `pip install .` (recommended to
@@ -22,9 +24,9 @@ with nginx's auth_request.
 3. Create `config.yaml`, follows `config.example.yaml`. A minimal version:
 ```yaml
 user_table: users.yaml
-session_secret_key: deadbeef
 site_name: Restrict Area
 logfile: /var/log/nslogin.py
+login_life_time: 2592000  # 30 days
 ```
 
 4. Add user with `nslogin-user` command, e.g.
@@ -32,7 +34,7 @@ logfile: /var/log/nslogin.py
 nslogin-user --config config.yaml --add --name terry
 ```
 
-5. Run `nslogind --config config.yaml`.
+5. Run the daemon of _nslogin_ `nslogind --config config.yaml`.
 
 6. Edit `nginx.conf`, 
 ```nginx
@@ -71,3 +73,60 @@ nslogin-user --config config.yaml --add --name terry
 ```
 
 7. Reload nginx and enjoy.
+
+### Privilege system
+
+Sometimes one may want to restrict one user to access a specific path. This can
+be achieved by the privilege system of _nslogin_.
+
+1. Add user with privileges set as
+```bash
+nslogin-user --config config.yaml --add --name terry --privileges A, B
+nslogin-user --config config.yaml --add --name alice --privileges A 
+nslogin-user --config config.yaml --add --name bob --privileges B 
+```
+or, in short,
+```bash
+nslogin-user -a -n terry -pr A, B
+nslogin-user -a -n alice -pr A
+nslogin-user -a -n bob -pr B
+```
+
+2. Edit `nginx.conf`
+```nginx
+    location /kitchen {
+        auth_request /nslogin/auth/A; # <<< 'A' is the privilege requested to access this location
+        root   /srv/http;
+        index  index.html index.htm;
+    }
+    location /bedroom {
+        auth_request /nslogin/auth/B; # <<< 'B' is the privilege requested to access this location
+        root   /srv/http;
+        index  index.html index.htm;
+    }
+```
+
+This configuration allows `alice` to access `/kitchen` and `bob` to access 
+`/bedroom` and grants `terry` the access to both locations.
+
+
+### Escape request URL
+When redirection to the login page, the original URL is passed as a `GET` parameter:
+```nginx
+    location @error401 {
+        return 302 http://$http_host/nslogin/?redirect=http://$http_host$request_uri;
+    }
+```
+
+If `$request_uri` includes other `GET` parameters, they will be ignored. In
+order to properly encode `$request_uri`, one needs to install [lua-nginx-module](
+https://github.com/openresty/lua-nginx-module) because nginx doesn't have the ability
+to deal with complicated rewrite rules. Then use `rewrite_by_lua_block`:
+```nginx
+    location @error401 {
+        rewrite_by_lua_block {
+                return ngx.redirect("http://" .. ngx.var.http_host .. "/nslogin/?redirect=" .. ngx.escape_uri(ngx.var.request_uri))
+        }
+    }
+```
+
