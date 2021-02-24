@@ -22,10 +22,12 @@ logger = logging.getLogger("login")
 
 
 def get_login_record():
-    if 'token' not in request.cookies or request.cookies['token'] not in login_token_record:
+    if 'token' in request.cookies and request.cookies['token'] in login_token_record:
+        login = login_token_record[request.cookies['token']]
+    elif 'token' in request.args:
+        login = login_token_record[request.args['token']]
+    else:
         return None
-
-    login = login_token_record[request.cookies['token']]
 
     if not (time.time() - login.login_at <
             config.get('login_life_time', 24 * 3600)):
