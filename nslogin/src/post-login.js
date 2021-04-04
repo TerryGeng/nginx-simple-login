@@ -1,12 +1,12 @@
 import {library, dom} from '@fortawesome/fontawesome-svg-core/index.es.js';
 import {
-    faExchangeAlt, faDoorOpen
+    faExchangeAlt, faDoorOpen, faHouseUser
 } from '@fortawesome/free-solid-svg-icons/index.es.js';
 
 import { logout } from './user'
 
 library.add(
-    faExchangeAlt, faDoorOpen
+    faExchangeAlt, faDoorOpen, faHouseUser
 );
 
 

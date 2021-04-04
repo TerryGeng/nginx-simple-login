@@ -89,11 +89,13 @@ class MysqlUserTable(UserTable):
 
     @staticmethod
     def pack_user_info(user_info_array):
+        timestamp = user_info_array[3] if user_info_array[3] else 0
+
         return UserInfo(
             name=user_info_array[0],
             password_hash=user_info_array[1],
             password_salt=user_info_array[2],
-            last_login_timestamp=datetime.fromtimestamp(user_info_array[3]).isoformat(),
+            last_login_timestamp=datetime.fromtimestamp(timestamp).isoformat(),
             last_login_ip=user_info_array[4],
             privilege=user_info_array[5].split(",")
         )
@@ -188,8 +190,7 @@ class MysqlUserTable(UserTable):
             raise ValueError(f"User '{user}' doesn't exist.")
 
         _, hash_ = self.get_salted_hash(password_provided,
-                                        bytes.fromhex(
-                                            self.user_dict[user].password_salt))
+                                        user_info.password_salt)
 
         return user_info.password_hash == hash_
 

@@ -1,14 +1,10 @@
 import {library, dom} from '@fortawesome/fontawesome-svg-core/index.es.js';
 import {
-    faKey, faCheck, faInfoCircle, faExclamationTriangle
+    faKey, faCheck, faInfoCircle, faExclamationTriangle, faTimesCircle, faChevronLeft
 } from '@fortawesome/free-solid-svg-icons/index.es.js';
 
-import {
-    faTimesCircle
-} from '@fortawesome/free-regular-svg-icons/index.es.js';
-
 library.add(
-    faKey, faCheck, faTimesCircle, faInfoCircle, faExclamationTriangle
+    faKey, faCheck, faTimesCircle, faInfoCircle, faExclamationTriangle, faChevronLeft
 );
 
 import {

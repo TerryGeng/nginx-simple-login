@@ -16,11 +16,16 @@ import { login } from './user';
 document.addEventListener('DOMContentLoaded', () => {
   dom.watch();
 
+  const loginForm = document.getElementById('login-form');
   const userInput = document.getElementById('login-user');
   const passwordInput = document.getElementById('login-password');
   const submitBtn = document.getElementById('login-submit');
   const redirectInput = document.getElementById('login-redirect');
   const logoutStatus = document.getElementById('logout-status');
+
+  loginForm.addEventListener("submit", function(evt) {
+        evt.preventDefault();
+    }, true);
 
   if (logoutStatus.value === 'True') {
       showPromptBox(
