@@ -66,10 +66,13 @@ class MysqlUserTable(UserTable):
         cursor.close()
         conn.close()
 
-    def query(self, sql_template, filler):
+    def query(self, sql_template, filler=[]):
         conn = mariadb.connect(**self.user_db_access)
         cursor = conn.cursor()
-        cursor.execute(sql_template, filler)
+        if filler:
+            cursor.execute(sql_template, filler)
+        else:
+            cursor.execute(sql_template)
 
         ret = cursor.fetchall()
 
@@ -89,7 +92,7 @@ class MysqlUserTable(UserTable):
 
     @staticmethod
     def pack_user_info(user_info_array):
-        timestamp = user_info_array[3] if user_info_array[3] else 0
+        timestamp = user_info_array[3]/1000 if user_info_array[3] else 0
 
         return UserInfo(
             name=user_info_array[0],
@@ -196,7 +199,7 @@ class MysqlUserTable(UserTable):
 
     def update_user_login_info(self, user, ip, timestamp):
         self.execute(f"UPDATE `{self.table}` SET lastlogin=?, ip=? WHERE username=?",
-                     (timestamp, ip, user))
+                     (int(timestamp*1000), ip, user))
 
     def verify_user_privileges(self, user, privileges):
         if not privileges:
@@ -230,7 +233,7 @@ class MysqlUserTable(UserTable):
             priv = priv.lower()
             privilege.append(priv)
 
-        self.execute(f"UPDATE `{self.table}` SET web_privilege=? WHERE username=?",
+        self.execute(f"UPDATE `{self.table}` SET web_privileges=? WHERE username=?",
                      (",".join(privilege), user))
 
     def add_user_privileges(self, user, privileges):
@@ -243,7 +246,7 @@ class MysqlUserTable(UserTable):
             if priv not in user_info.privilege:
                 user_info.privilege.append(priv)
 
-        self.execute(f"UPDATE `{self.table}` SET web_privilege=? WHERE username=?",
+        self.execute(f"UPDATE `{self.table}` SET web_privileges=? WHERE username=?",
                      (",".join(user_info.privilege), user))
 
     def remove_user_privileges(self, user, privileges):
@@ -256,7 +259,7 @@ class MysqlUserTable(UserTable):
             if priv in user_info.privilege:
                 user_info.privilege.remove(priv)
 
-        self.execute(f"UPDATE `{self.table}` SET web_privilege=? WHERE username=?",
+        self.execute(f"UPDATE `{self.table}` SET web_privileges=? WHERE username=?",
                      (",".join(user_info.privilege), user))
 
     @staticmethod
