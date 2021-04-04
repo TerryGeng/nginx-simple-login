@@ -110,6 +110,25 @@ This configuration allows `alice` to access `/kitchen` and `bob` to access
 `/bedroom` and grants `terry` the access to both locations.
 
 
+### Register
+Sometimes one would like to allow others to register to the server with a valid
+invitation code. Register function can be enabled by putting the following snippet
+into the `config.yaml`
+```yaml
+register:
+  enabled: true
+  use_invitation_code: true
+  dispose_used_invitation_code: true
+  invitation_code_file: invitations.yaml
+```
+
+where `invitations.yaml` is a list of invitation codes. A handy way to generate
+some is
+```bash
+for i in {1..5}; do echo "- $(dd if=/dev/random bs=9 count=1 2>/dev/null | base64)"; done > invitations.yaml
+```
+
+
 ### Escape request URL
 When redirection to the login page, the original URL is passed as a `GET` parameter:
 ```nginx

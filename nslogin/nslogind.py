@@ -6,10 +6,11 @@ import argparse
 import yaml
 import secrets
 from collections import namedtuple
-from flask import Flask, abort, request, render_template, make_response
+from flask import (Flask, abort, request, render_template, make_response,
+                   redirect, escape)
 
 from .utils.reverse_proxied import ReverseProxied
-from .utils.user_table import UserTable
+from nslogin.storage import get_user_table, UserTable
 
 LoginTokenRecord = namedtuple('LoginTokenRecord', ['user', 'token', 'login_at'])
 
@@ -20,6 +21,15 @@ user_table: UserTable
 login_token_record = {}
 
 logger = logging.getLogger("login")
+
+
+def safeget(dct, *keys):
+    for key in keys:
+        try:
+            dct = dct[key]
+        except KeyError:
+            return None
+    return dct
 
 
 def get_login_record():
@@ -69,7 +79,6 @@ def auth(privileges):
 @app.route('/login', methods=['GET'])
 @app.route('/login/', methods=['GET'])
 def login_page():
-    print(login_token_record)
     login = get_login_record()
     if login:
         return render_template("post-login.template.html",
@@ -77,7 +86,8 @@ def login_page():
                                post_login_title=config.get("post_login_page_title",
                                                            "User Area"),
                                post_login_message=config.get("post_login_page_title",
-                                                             "Welcome")
+                                                             "Welcome"),
+
                                ), 200
     else:
         redirect = ""
@@ -94,6 +104,7 @@ def login_page():
                                                       "Authentication Needed"),
                                login_message=config.get("login_page_message",
                                                         ""),
+                               register=safeget(config, 'register', 'enabled'),
                                redirect=redirect,
                                logout=logout), 200
 
@@ -157,6 +168,56 @@ def change_password_page():
                            ), 200
 
 
+@app.route('/register', methods=['POST'])
+def register():
+    login = get_login_record()
+    if login:
+        return redirect('./')
+
+    if 'user' in request.form and 'password' in request.form and \
+            'invitation' in request.form:
+        user = str(escape(request.form['user']))
+        invitation = request.form['invitation']
+        password = request.form['password']
+
+        if not safeget(config, 'register', 'enabled'):
+            return 'disabled', 400
+
+        if safeget(config, 'register', 'use_invitation_code'):
+            code_file = safeget(config, 'register', 'invitation_code_file')
+            if not code_file or not os.path.exists(code_file):
+                logger.error(f'Cannot read invitation code file {code_file}')
+                return abort(500)
+
+            with open(code_file, "r") as f:
+                codes = yaml.safe_load(f)
+
+            if not invitation or invitation not in codes:
+                return 'invitation', 400
+
+            if safeget(config, 'register', 'dispose_used_invitation_code'):
+                codes.remove(invitation)
+                with open(code_file, "w") as f:
+                    yaml.dump(codes, f)
+
+        if user_table.has_user(user):
+            return 'duplicated', 400
+
+        user_table.add_user(user, password)
+        return '', 200
+
+
+@app.route('/register', methods=['GET'])
+def register_page():
+    if not safeget(config, 'register', 'enabled'):
+        return redirect('./')
+
+    return render_template("register.template.html",
+                           site_name=config.get("site_name", "Restricted Area"),
+                           invitation=safeget(config, 'register', 'use_invitation_code')
+                           ), 200
+
+
 @app.route('/logout', methods=['GET'])
 def logout():
     login = get_login_record()
@@ -194,18 +255,13 @@ def main():
     with open(args.config_path, "r") as f:
         config = yaml.safe_load(f)
 
-    user_table_path = config.get('user_table', 'user_table.yaml')
-    if os.path.exists(user_table_path):
-        user_table = UserTable(user_table_path)
-    else:
-        print("ERROR: user table doesn't exist.")
-        exit(1)
-
     logger.setLevel(logging.INFO)
     if 'logfile' in config and config['logfile']:
         handler = logging.FileHandler(config['logfile'])
     else:
         handler = logging.StreamHandler()
+
+    user_table = get_user_table(config)
 
     formatter = logging.Formatter(
         '[%(asctime)s %(levelname)s] %(message)s', "%b %d %H:%M:%S")

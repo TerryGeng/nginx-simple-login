@@ -50,22 +50,31 @@
                         <div class="form-group">
                             {{ login_message }}
                         </div>
-                        <div class="form-group">
-                            <label for="login-user">User name</label>
-                            <input type="text" class="form-control" id="login-user" name="user">
-                        </div>
-                        <div class="form-group">
-                            <label for="login-password">Password</label>
-                            <input type="password" class="form-control" id="login-password" name="password">
-                        </div>
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary float-right" id="login-submit">
-                                <i class="fas fa-check" aria-hidden="true"></i> Login
-                            </button>
-                        </div>
-                        <input type="hidden" id="login-redirect" value="{{ redirect }}">
-                        <input type="hidden" id="logout-status" value="{{ logout }}">
+                        <form>
+                            <div class="form-group">
+                                <label for="login-user">User name</label>
+                                <input type="text" class="form-control" id="login-user" name="user">
+                            </div>
+                            <div class="form-group">
+                                <label for="login-password">Password</label>
+                                <input type="password" class="form-control" id="login-password" name="password">
+                            </div>
+                            <div class="form-group text-right">
+                                <button type="submit" class="btn btn-primary" id="login-submit">
+                                    <i class="fas fa-check" aria-hidden="true"></i> Login
+                                </button>
+                            </div>
+
+                            {% if register %}
+                            <div class="form-group text-right mb-0">
+                                <a href="./register">Register</a>
+                            </div>
+                            {% endif %}
+                            <input type="hidden" id="login-redirect" value="{{ redirect }}">
+                            <input type="hidden" id="logout-status" value="{{ logout }}">
+                        </form>
                     </div>
+
                 </div>
             </div>
         </div>

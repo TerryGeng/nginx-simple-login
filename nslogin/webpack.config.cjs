@@ -4,11 +4,13 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const IgnoreEmitPlugin = require("ignore-emit-webpack-plugin");
 
 module.exports = {
+  // mode: 'development',
   entry: {
     'login': './src/login.js',
     '403': './src/403.js',
     'change-password': './src/change-password.js',
     'post-login': './src/post-login.js',
+    'register': './src/register.js',
     'css': './src/style.scss'
   },
   devtool: 'source-map',
@@ -39,6 +41,11 @@ module.exports = {
     new HtmlWebpackPlugin({
       filename: 'templates/change-password.template.html',
       template: 'src/change-password.template.html',
+      inject: false
+    }),
+    new HtmlWebpackPlugin({
+      filename: 'templates/register.template.html',
+      template: 'src/register.template.html',
       inject: false
     }),
   ],

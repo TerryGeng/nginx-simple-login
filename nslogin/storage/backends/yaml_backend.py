@@ -3,23 +3,25 @@ import re
 import yaml
 import secrets
 import hashlib
+import logging
 from datetime import datetime
 
-from nslogin.utils.format import TableFormatter
+from nslogin.storage.user_info import UserInfo
+from nslogin.storage.user_table import UserTable
+
+logger = logging.getLogger('login')
 
 
-class UserInfo:
-    def __init__(self, name, password_hash, password_salt,
-                 last_login_timestamp, last_login_ip, privilege):
-        self.name = name
-        self.password_hash = password_hash
-        self.password_salt = password_salt
-        self.last_login_timestamp = last_login_timestamp
-        self.last_login_ip = last_login_ip
-        self.privilege = privilege
+def get_user_table(config):
+    user_table_path = config.get('user_table', 'user_table.yaml')
+
+    if not os.path.exists(user_table_path):
+        logger.warning("User table doesn't exist. A new one will be created.")
+
+    return YamlUserTable(user_table_path)
 
 
-class UserTable:
+class YamlUserTable(UserTable):
     def __init__(self, user_info_file=None):
         self.user_dict = {}
         self.user_info_file = user_info_file
@@ -68,15 +70,7 @@ class UserTable:
         else:
             user_info_list = self.user_dict.values()
 
-        table = TableFormatter()
-        table.add_column("User name", "name", 20)
-        table.add_column("Last login time", "last_login_timestamp")
-        table.add_column("Last login ip", "last_login_ip")
-        table.add_column("Privileges", "privilege", 20, None, lambda l: ", ".join(l))
-
-        table.add_rows(user_info_list)
-        table.print_formatted()
-        print(f"{len(self.user_dict)} users in total")
+        return user_info_list
 
     def change_user_password(self, user, new_password):
         if user not in self.user_dict:

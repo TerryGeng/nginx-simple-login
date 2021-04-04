@@ -15,11 +15,19 @@ import {
     clearPromptBox, showPromptBox
 } from './prompt-box'
 
-import { login, changePassword } from './user'
+import { login, checkLogin, changePassword } from './user'
 
 
 document.addEventListener('DOMContentLoaded', () => {
     dom.watch();
+
+    checkLogin().then(
+        success => {
+            if (!success) {
+                location.href = './';
+            }
+        }
+    );
 
     const oldPasswordInput = document.getElementById('old-password');
     const newPasswordInput = document.getElementById('new-password');

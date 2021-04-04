@@ -1,11 +1,10 @@
 import os
 import re
-import time
-import logging
 import argparse
 import yaml
 
-from .utils.user_table import UserTable
+from nslogin.storage import get_user_table, UserTable
+from nslogin.utils.format import TableFormatter
 
 config = {}
 user_table: UserTable
@@ -124,9 +123,19 @@ def list_user(args):
             user_regex = user.replace("*", ".*")
             user = ""
 
-        user_table.list_users(user, user_regex)
+        user_info_list = user_table.list_users(user, user_regex)
     else:
-        user_table.list_users(user)
+        user_info_list = user_table.list_users()
+
+        table = TableFormatter()
+        table.add_column("User name", "name", 20)
+        table.add_column("Last login time", "last_login_timestamp")
+        table.add_column("Last login ip", "last_login_ip")
+        table.add_column("Privileges", "privilege", 20, None, lambda l: ", ".join(l))
+
+        table.add_rows(user_info_list)
+        table.print_formatted()
+        print(f"{len(user_info_list)} users in total")
 
 
 def main():
@@ -138,9 +147,6 @@ def main():
     parser.add_argument("--config", "-c", dest="config_path",
                         help="path to the configuration file, "
                              "where the path to the user table can be fount")
-
-    parser.add_argument("--user-table", "-u", dest="table_path",
-                        help="path to the user table")
 
     action_group = parser.add_mutually_exclusive_group()
     action_group.add_argument("--add", "-a", action="store_true",
@@ -172,24 +178,17 @@ def main():
 
     args = parser.parse_args()
 
-    if args.table_path:
-        user_table_path = args.table_path
-    else:
-        if not args.config_path or not os.path.exists(args.config_path):
-            if os.path.exists('config.yaml'):
-                args.config_path = 'config.yaml'
-            else:
-                print("ERROR: config file doesn't exist.")
-                exit(1)
+    if not args.config_path or not os.path.exists(args.config_path):
+        if os.path.exists('config.yaml'):
+            args.config_path = 'config.yaml'
+        else:
+            print("ERROR: config file doesn't exist.")
+            exit(1)
 
-        with open(args.config_path, "r") as f:
-            config = yaml.safe_load(f)
-            user_table_path = config.get('user_table', 'user_table.yaml')
+    with open(args.config_path, "r") as f:
+        config = yaml.safe_load(f)
 
-    user_table = UserTable(user_table_path)
-
-    if not os.path.exists(user_table_path):
-        print("WARNING: user table doesn't exist. A new one will be created.")
+    user_table = get_user_table(config)
 
     if args.add:
         add_user(args)
