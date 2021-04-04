@@ -9,6 +9,7 @@ from collections import namedtuple
 from flask import (Flask, abort, request, render_template, make_response,
                    redirect, escape)
 
+from nslogin.utils.misc import safeget
 from .utils.reverse_proxied import ReverseProxied
 from nslogin.storage import get_user_table, UserTable
 
@@ -21,15 +22,6 @@ user_table: UserTable
 login_token_record = {}
 
 logger = logging.getLogger("login")
-
-
-def safeget(dct, *keys):
-    for key in keys:
-        try:
-            dct = dct[key]
-        except KeyError:
-            return None
-    return dct
 
 
 def get_login_record():
@@ -195,15 +187,21 @@ def register():
             if not invitation or invitation not in codes:
                 return 'invitation', 400
 
+            if user_table.has_user(user):
+                return 'duplicated', 400
+
+            user_table.add_user(user, password)
+
             if safeget(config, 'register', 'dispose_used_invitation_code'):
                 codes.remove(invitation)
                 with open(code_file, "w") as f:
                     yaml.dump(codes, f)
+        else:
+            if user_table.has_user(user):
+                return 'duplicated', 400
 
-        if user_table.has_user(user):
-            return 'duplicated', 400
+            user_table.add_user(user, password)
 
-        user_table.add_user(user, password)
         return '', 200
 
 

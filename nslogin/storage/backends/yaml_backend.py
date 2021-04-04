@@ -28,12 +28,13 @@ class YamlUserTable(UserTable):
         self.load_from_file()
 
     def has_user(self, user):
-        if user in self.user_dict:
+        if user.lower() in self.user_dict:
             return True
         else:
             return False
 
     def add_user(self, user, password, privilege=None):
+        user = user.lower()
         if user in self.user_dict:
             raise ValueError(f"User '{user}' exists.")
 
@@ -53,12 +54,14 @@ class YamlUserTable(UserTable):
         self.save_to_file()
 
     def delete_user(self, user):
+        user = user.lower()
         if user not in self.user_dict:
             raise ValueError(f"User '{user}' doesn't exist.")
         del self.user_dict[user]
         self.save_to_file()
 
     def list_users(self, name="", regex=""):
+        name = name.lower()
         if name:
             if name not in self.user_dict:
                 raise ValueError(f"User '{name}' doesn't exist.")
@@ -73,6 +76,7 @@ class YamlUserTable(UserTable):
         return user_info_list
 
     def change_user_password(self, user, new_password):
+        user = user.lower()
         if user not in self.user_dict:
             raise ValueError(f"User '{user}' doesn't exist.")
 
@@ -84,6 +88,7 @@ class YamlUserTable(UserTable):
         self.save_to_file()
 
     def verify_user_password(self, user, password_provided):
+        user = user.lower()
         if user not in self.user_dict:
             raise ValueError(f"User '{user}' doesn't exist.")
 
@@ -91,12 +96,10 @@ class YamlUserTable(UserTable):
                                         bytes.fromhex(
                                             self.user_dict[user].password_salt))
 
-        if self.user_dict[user].password_hash == hash_:
-            return True
-        else:
-            return False
+        return self.user_dict[user].password_hash == hash_
 
     def update_user_login_info(self, user, ip, timestamp):
+        user = user.lower()
         if user not in self.user_dict:
             raise ValueError(f"User '{user}' doesn't exist.")
 
@@ -106,6 +109,7 @@ class YamlUserTable(UserTable):
         self.save_to_file()
 
     def verify_user_privileges(self, user, privileges):
+        user = user.lower()
         if not privileges:
             privileges = ['default']
 
@@ -120,12 +124,14 @@ class YamlUserTable(UserTable):
         return True
 
     def get_user_privileges(self, user):
+        user = user.lower()
         if user not in self.user_dict:
             raise ValueError(f"User '{user}' doesn't exist.")
 
         return self.user_dict[user].privilege
 
     def change_user_privileges(self, user, privileges):
+        user = user.lower()
         if user not in self.user_dict:
             raise ValueError(f"User '{user}' doesn't exist.")
 
@@ -137,6 +143,7 @@ class YamlUserTable(UserTable):
         self.save_to_file()
 
     def add_user_privileges(self, user, privileges):
+        user = user.lower()
         if user not in self.user_dict:
             raise ValueError(f"User '{user}' doesn't exist.")
 
@@ -148,6 +155,7 @@ class YamlUserTable(UserTable):
         self.save_to_file()
 
     def remove_user_privileges(self, user, privileges):
+        user = user.lower()
         if user not in self.user_dict:
             raise ValueError(f"User '{user}' doesn't exist.")
 
