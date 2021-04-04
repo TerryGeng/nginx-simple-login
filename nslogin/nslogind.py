@@ -77,7 +77,7 @@ def login_page():
                                site_name=config.get("site_name", "Restricted Area"),
                                post_login_title=config.get("post_login_page_title",
                                                            "User Area"),
-                               post_login_message=config.get("post_login_page_title",
+                               post_login_message=config.get("post_login_message",
                                                              "Welcome"),
 
                                ), 200

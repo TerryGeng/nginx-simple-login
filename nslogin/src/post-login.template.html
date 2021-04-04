@@ -17,7 +17,7 @@
                     <i class="fas fa-house-user" aria-hidden="true"></i> {{ site_name }}
                 </div>
                 <div class="card-body">
-                    <h3>{{ post_login_title }}</h3>
+                    <h3>{{ post_login_title|safe }}</h3>
                     <hr />
                     <div class="alert alert-warning" id="login-warning-box" style="display: none">
                         <h5 class="alert-heading">
@@ -48,7 +48,7 @@
                         <p class="mb-0 box-content"></p>
                     </div>
                     <div class="form-group">
-                        {{ post_login_message }}
+                        {{ post_login_message|safe }}
                     </div>
                     <div class="form-group">
                         <a type="button" class="btn btn-primary btn-lg btn-block" href="./changepassword">
