@@ -5,7 +5,7 @@ import argparse
 import yaml
 import re
 
-from importlib import import_module
+import importlib
 
 
 def list_all_backends():
@@ -19,18 +19,18 @@ def list_all_backends():
         if not match:
             continue
 
-        full_package_name = f"{dirname}.{package_name}"
-        backends_dict[match[1]] = (full_package_name, module_info)
+        full_package_name = f"nslogin.storage.backends.{package_name}"
+        backends_dict[match[1]] = full_package_name
 
     return backends_dict
 
 
-def get_module(module_description):
-    full_package_name, module_info = module_description
+def get_module(full_package_name):
     if full_package_name not in sys.modules:
-        module = module_info.module_finder.find_module(
-            module_info.name).load_module(module_info.name)
+        spec = importlib.util.find_spec(full_package_name)
+        module = importlib.util.module_from_spec(spec)
         sys.modules[full_package_name] = module
+        spec.loader.exec_module(module)
     else:
         module = sys.modules[full_package_name]
 

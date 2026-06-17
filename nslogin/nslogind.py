@@ -7,7 +7,8 @@ import yaml
 import secrets
 from collections import namedtuple
 from flask import (Flask, abort, request, render_template, make_response,
-                   redirect, escape)
+                   redirect)
+from markupsafe import escape
 
 from nslogin.utils.misc import safeget
 from .utils.reverse_proxied import ReverseProxied

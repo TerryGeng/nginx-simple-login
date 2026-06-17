@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nginx-simple-login"
+dependencies = ["flask", "pyyaml"]
+version = "0.2"
+description = "A self-hosted, lightweight authentication service backend designed to work with nginx's auth_request."
+readme = "README.md"
+authors = [{name = "Terry Geng", email = "terry@terriex.com"}]
+license = "LGPL-2.0-or-later"
+
+[tool.setuptools.packages]
+find = {}
+
+[project.scripts]
+nslogind = "nslogin.nslogind:main"
+nslogin-user = "nslogin.nsloginuser:main"
