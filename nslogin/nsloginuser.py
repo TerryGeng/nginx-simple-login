@@ -19,7 +19,7 @@ def add_user(args):
         print("ERROR: user name must be specified.")
         exit(1)
 
-    if not re.fullmatch("[a-zA-Z]\w*", user):
+    if not re.fullmatch(r"[a-zA-Z]\w*", user):
         print("ERROR: user name must be composed with alphabets and digits only."
               "The first character must be a alphabet.")
         exit(1)
@@ -114,7 +114,7 @@ def list_user(args):
     user = args.user_name
 
     if user:
-        if not re.fullmatch("[a-zA-Z*][\w*]*", user):
+        if not re.fullmatch(r"[a-zA-Z*][\w*]*", user):
             print(f"ERROR: wrong user name format.")
             exit(1)
 
